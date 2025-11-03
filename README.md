@@ -23,7 +23,7 @@ The binary will be available at `target/release/masuk`.
 ### Via Homebrew (Recommended)
 
 ```bash
-brew tap herpiko/masuk https://github.com/herpiko/masuk
+brew tap herpiko/masuk
 brew install masuk
 ```
 
