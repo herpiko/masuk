@@ -15,6 +15,8 @@ struct HostConfig {
     user: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     port: Option<u16>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    key: Option<String>,
 }
 
 type Profiles = HashMap<String, HostConfig>;
@@ -95,12 +97,13 @@ impl Masuk {
         Ok(())
     }
 
-    fn add(&mut self, profile: &str, host: &str, user: Option<String>, port: Option<u16>) -> Result<()> {
+    fn add(&mut self, profile: &str, host: &str, user: Option<String>, port: Option<u16>, key: Option<String>) -> Result<()> {
         // Add to config
         let host_config = HostConfig {
             host: host.to_string(),
             user,
             port,
+            key,
         };
 
         // Build display string
@@ -111,6 +114,9 @@ impl Masuk {
         display.push_str(&host_config.host);
         if let Some(p) = host_config.port {
             display.push_str(&format!(":{}", p));
+        }
+        if let Some(ref k) = host_config.key {
+            display.push_str(&format!(" (key: {})", k));
         }
 
         self.config.profiles.insert(profile.to_string(), host_config);
@@ -146,6 +152,11 @@ impl Masuk {
         // Add port if specified
         if let Some(port) = host_config.port {
             cmd.arg("-p").arg(port.to_string());
+        }
+
+        // Add key if specified
+        if let Some(ref key) = host_config.key {
+            cmd.arg("-i").arg(key);
         }
 
         // Build the target (user@host or just host)
@@ -186,6 +197,9 @@ impl Masuk {
             if let Some(p) = host_config.port {
                 display.push_str(&format!(":{}", p));
             }
+            if let Some(ref k) = host_config.key {
+                display.push_str(&format!(" (key: {})", k));
+            }
             println!("  {} → {}", profile, display);
         }
         println!();
@@ -214,7 +228,7 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    #[command(about = "Add a profile with host and optional user/port. Example: 'masuk add foobar -h 192.168.1.81 -u root -p 2222'")]
+    #[command(about = "Add a profile with host and optional user/port/key. Example: 'masuk add foobar -h 192.168.1.81 -u root -p 2222 -k ~/.ssh/id_rsa'")]
     Add {
         /// Profile name
         profile: String,
@@ -227,6 +241,9 @@ enum Commands {
         /// SSH port (optional, omit to use SSH default)
         #[arg(short = 'p', long)]
         port: Option<u16>,
+        /// SSH key path (optional, will be used with -i flag)
+        #[arg(short = 'k', long)]
+        key: Option<String>,
     },
     #[command(about = "List all configured profiles")]
     #[command(alias = "ls")]
@@ -261,8 +278,8 @@ fn main() -> Result<()> {
     let mut masuk = Masuk::new()?;
 
     match cli.command {
-        Commands::Add { profile, host, user, port } => {
-            masuk.add(&profile, &host, user, port)?;
+        Commands::Add { profile, host, user, port, key } => {
+            masuk.add(&profile, &host, user, port, key)?;
         }
         Commands::List => {
             masuk.list()?;
