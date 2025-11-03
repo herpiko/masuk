@@ -20,13 +20,25 @@ The binary will be available at `target/release/masuk`.
 
 ## Installation
 
+### Via Homebrew (Recommended)
+
+```bash
+brew tap herpiko/masuk https://github.com/herpiko/masuk
+brew install masuk
+```
+
+### From Source
+
+Build and install using Cargo:
+
 ```bash
 cargo install --path .
 ```
 
-Or copy the binary to your PATH:
+Or build and copy the binary to your PATH:
 
 ```bash
+cargo build --release
 cp target/release/masuk /usr/local/bin/
 ```
 
